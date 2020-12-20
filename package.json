@@ -1,0 +1,24 @@
+{
+  "name": "jspe",
+  "description": "JavaScript Pokemon Editor; Tool for Pokemon ROM Hacking",
+  "version": "0.0.1",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skeetcha/JSPE.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/skeetcha/JSPE/issues"
+  },
+  "homepage": "https://github.com/skeetcha/JSPE#readme",
+  "devDependencies": {
+    "electron": "^11.1.0"
+  }
+}
