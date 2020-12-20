@@ -13,6 +13,8 @@ let dirty;
 let baseRom, directory, projName, projRom;
 let config = {};
 let jspeVersion = '0.1.1';
+const pathOs = isWin ? path.win32 : path.posix;
+let projFile = '';
 
 function createWindow() {
     win = new BrowserWindow({
@@ -28,8 +30,6 @@ function createWindow() {
 }
 
 const deleteFolderRecursive = (path) => {
-    var pathOs = isWin ? path.win32 : path.posix;
-    
     if (fs.existsSync(path)) {
         fs.readdirSync(path).forEach((file, index) => {
             const curPath = pathOs.join(path, file);
@@ -47,8 +47,6 @@ const deleteFolderRecursive = (path) => {
 
 const ndsTool = {
     dump: (fname, directory) => {
-        var pathOs = isWin ? path.win32 : path.posix;
-
         var params = [
             '-x', fname,
             '-7', pathOs.join([directory, 'arm7.bin']),
@@ -95,8 +93,7 @@ function newProject() {
             { name: 'Nintendo DS ROM', extensions: ['nds']}
         ]
     }).then((fileData) => {
-        var filePath = path.normalize(fileData.filePaths[0]);
-        var pathOs = isWin ? path.win32 : path.posix;
+        var filePath = pathOs.normalize(fileData.filePaths[0]);
         var d = pathOs.dirname(filePath);
         var tail = pathOs.basename(filePath);
         var name = tail.replace(pathOs.extname(filePath), '');
@@ -142,13 +139,33 @@ function newProject() {
         win.webContents.send('directory', {type: 'set', value: d});
         win.webContents.send('projName', {type: 'set', value: name});
         win.webContents.send('projRom', {type: 'set', value: pathOs.join([d, 'edit.nds'])});
-        config.project = {'directory': d};
+        config.project = {
+            directory: d,
+            baseRom: pathOs.join([d, 'base.nds']),
+            projName: name,
+            projRom: pathOs.join([d, 'edit.nds'])
+        };
         config.versioninfo = jspeVersion;
     });
 }
 
 function openProject() {
+    dialog.showOpenDialog(win, {
+        properties: ['openFile'],
+        filters: [
+            { name: 'JSPE Project File', extensions: ['jspe']}
+        ]
+    }).then((fileData) => {
+        var filePath = pathOs.normalize(fileData.filePaths[0]);
+        projFile = filePath;
+        config = JSON.parse(fs.readFileSync(filePath));
 
+        win.webContents.send('baseRom', {type: 'set', value: config.project.baseRom});
+        win.webContents.send('directory', {type: 'set', value: config.project.directory});
+        win.webContents.send('projName', {type: 'set', value: config.project.projName});
+        win.webContents.send('projRom', {type: 'set', value: config.project.projRom});
+        config.versioninfo = jspeVersion;
+    });
 }
 
 function saveProject() {
