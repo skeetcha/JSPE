@@ -3,8 +3,8 @@ const child = require('child_process').execFile;
 const path = require('path');
 const fs = require('fs');
 
-const ndsToolExe = 'bin/ndstool.exe';
-const xdelta = 'bin/xdelta.exe';
+const ndsToolExe = 'ndstool.exe';
+const xdelta = 'xdelta.exe';
 
 let win;
 const isMac = process.platform === 'darwin';
@@ -59,7 +59,55 @@ const ndsTool = {
             '-d', pathOs.join([directory, 'fs'])
         ];
 
-        child(ndsToolExe, params, (err, data) => {
+        child(pathOs.join(['bin', ndsToolExe]), params, (err, data) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            console.log(data.toString());
+        });
+    },
+    build: (fname, directory) => {
+        var arm9 = pathOs.join([directory, 'arm9.dec.bin']);
+
+        try {
+            var stats = fs.statSync(arm9);
+            
+            if (!stats.size) {
+                throw Error();
+            }
+        } catch (err) {
+            arm9 = pathOs.join([directory, 'arm9.bin']);
+        }
+
+        var overarm9 = pathOs.join([directory, 'overarm9.dec.bin']);
+        var overlays = pathOs.join([directory, 'overlays_dez']);
+
+        try {
+            var stats = fs.statSync(overarm9);
+
+            if (!stats.size) {
+                throw Error();
+            }
+        } catch (err) {
+            arm9 = pathOs.join([directory, 'arm9.bin']);
+            overlays = pathOs.join([directory, 'overlays']);
+        }
+
+        var params = [
+            '-c', fname,
+            '-7', pathOs.join([directory, 'arm7.bin']),
+            '-y7', pathOs.join([directory, 'overarm7.bin']),
+            '-9', arm9,
+            '-y9', overarm9,
+            '-y', overlays,
+            '-t', pathOs.join([directory, 'banner.bin']),
+            '-h', pathOs.join([directory, 'header.bin']),
+            '-d', pathOs.join([directory, 'fs'])
+        ];
+
+        child(pathOs.join(['bin', ndsTool]), params, (err, data) => {
             if (err) {
                 console.error(err);
                 return;
@@ -168,20 +216,58 @@ function openProject() {
     });
 }
 
-function saveProject() {
-
+function saveProjectAs() {
+    dialog.showSaveDialog(win, {
+        filters: [
+            { name: 'JSPE Project File', extensions: ['jspe']}
+        ]
+    }).then((fileData) => {
+        var filePath = pathOs.normalize(fileData.filePaths[0]);
+        projFile = filePath;
+        fs.writeFileSync(filePath, JSON.stringify(config));
+        dirty = false;
+    });
 }
 
-function saveProjectAs() {
+function saveProject() {
+    if (projFile === '') {
+        saveProjectAs();
+    } else {
+        fs.writeFileSync(projFile, JSON.stringify(config));
+        dirty = false;
+    }
+}
 
+function exportRomTo(path) {
+    if (config.project !== undefined) {
+        dialog.showMessageBoxSync(win, {
+            type: 'error',
+            title: 'No ROM Loaded',
+            message: 'There is no ROM loaded.'
+        });
+        return;
+    }
+
+    ndsTool.build(path, config.project.directory);
+    return;
 }
 
 function exportRom() {
-    
+    win.webContents.send('projRom', {type: 'get'});
+    setTimeout(() => {
+        exportRomTo(projRom);
+    }, 2000);
 }
 
 function exportRomAs() {
-
+    dialog.showSaveDialog(win, {
+        filters: [
+            { name: 'Nintendo DS ROM', extensions: ['nds']}
+        ]
+    }).then((fileData) => {
+        var filePath = pathOs.normalize(fileData.filePaths[0]);
+        exportRomTo(filePath);
+    });
 }
 
 function makePatch() {
