@@ -6,7 +6,7 @@ const fs = require('fs');
 const ndsToolExe = 'ndstool.exe';
 const xdeltaExe = 'xdelta.exe';
 
-let win, textWin;
+let win, textWin, pokeWin;
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 let dirty;
@@ -507,7 +507,16 @@ function openTextEditor() {
 }
 
 function openPokemonEditor() {
+    pokeWin = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
 
+    pokeWin.loadFile('views/poke.html');
+    pokeWin.webContents.openDevTools();
 }
 
 function openMoveEditor() {
