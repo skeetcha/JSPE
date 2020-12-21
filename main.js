@@ -6,7 +6,7 @@ const fs = require('fs');
 const ndsToolExe = 'ndstool.exe';
 const xdeltaExe = 'xdelta.exe';
 
-let win;
+let win, textWin;
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 let dirty;
@@ -27,6 +27,150 @@ function createWindow() {
 
     win.loadFile('views/main.html');
     win.webContents.openDevTools();
+
+    const template = isMac ? [
+        {
+            label: app.name,
+            submenu: [
+                {
+                    role: 'about'
+                },
+                {
+                    type: 'separator'
+                },
+                {
+                    role: 'hide'
+                },
+                {
+                    role: 'unhide'
+                },
+                {
+                    type: 'separator'
+                },
+                {
+                    role: 'quit'
+                }
+            ]
+        },
+        {
+            label: 'File',
+            submenu: [
+                {
+                    label: 'New Project',
+                    click: newProject,
+                    accelerator: 'CmdOrCtrl+N'
+                },
+                {
+                    label: 'Open Project',
+                    click: openProject,
+                    accelerator: 'CmdOrCtrl+O'
+                },
+                {
+                    label: 'Save Project',
+                    click: saveProject,
+                    accelerator: 'CmdOrCtrl+S'
+                },
+                {
+                    label: 'Save Project As',
+                    click: saveProjectAs,
+                    accelerator: 'CmdOrCtrl+Shift+S'
+                },
+                {
+                    label: 'Export ROM',
+                    click: exportRom
+                },
+                {
+                    label: 'Export ROM As',
+                    click: exportRomAs
+                },
+                {
+                    label: 'Make Patch',
+                    click: makePatch
+                },
+                {
+                    role: 'close'
+                }
+            ]
+        },
+        {
+            label: 'Edit',
+            submenu: [
+                {
+                    label: 'Text Editor',
+                    click: openTextEditor
+                },
+                {
+                    label: 'Pokemon Editor',
+                    click: openPokemonEditor
+                },
+                {
+                    label: 'Move Editor',
+                    click: openMoveEditor
+                }
+            ]
+        }
+    ] : [
+        {
+            label: 'File',
+            submenu: [
+                {
+                    label: 'New Project',
+                    click: newProject,
+                    accelerator: 'CmdOrCtrl+N'
+                },
+                {
+                    label: 'Open Project',
+                    click: openProject,
+                    accelerator: 'CmdOrCtrl+O'
+                },
+                {
+                    label: 'Save Project',
+                    click: saveProject,
+                    accelerator: 'CmdOrCtrl+S'
+                },
+                {
+                    label: 'Save Project As',
+                    click: saveProjectAs,
+                    accelerator: 'CmdOrCtrl+Shift+S'
+                },
+                {
+                    label: 'Export ROM',
+                    click: exportRom
+                },
+                {
+                    label: 'Export ROM As',
+                    click: exportRomAs
+                },
+                {
+                    label: 'Make Patch',
+                    click: makePatch
+                },
+                {
+                    role: 'quit'
+                }
+            ]
+        },
+        {
+            label: 'Edit',
+            submenu: [
+                {
+                    label: 'Text Editor',
+                    click: openTextEditor
+                },
+                {
+                    label: 'Pokemon Editor',
+                    click: openPokemonEditor
+                },
+                {
+                    label: 'Move Editor',
+                    click: openMoveEditor
+                }
+            ]
+        }
+    ]
+    
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
 }
 
 const deleteFolderRecursive = (path) => {
@@ -350,7 +494,16 @@ function makePatch() {
 }
 
 function openTextEditor() {
+    textWin = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
 
+    textWin.loadFile('views/text.html');
+    textWin.webContents.openDevTools();
 }
 
 function openPokemonEditor() {
@@ -360,150 +513,6 @@ function openPokemonEditor() {
 function openMoveEditor() {
 
 }
-
-const template = isMac ? [
-    {
-        label: app.name,
-        submenu: [
-            {
-                role: 'about'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                role: 'hide'
-            },
-            {
-                role: 'unhide'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                role: 'quit'
-            }
-        ]
-    },
-    {
-        label: 'File',
-        submenu: [
-            {
-                label: 'New Project',
-                click: newProject,
-                accelerator: 'CmdOrCtrl+N'
-            },
-            {
-                label: 'Open Project',
-                click: openProject,
-                accelerator: 'CmdOrCtrl+O'
-            },
-            {
-                label: 'Save Project',
-                click: saveProject,
-                accelerator: 'CmdOrCtrl+S'
-            },
-            {
-                label: 'Save Project As',
-                click: saveProjectAs,
-                accelerator: 'CmdOrCtrl+Shift+S'
-            },
-            {
-                label: 'Export ROM',
-                click: exportRom
-            },
-            {
-                label: 'Export ROM As',
-                click: exportRomAs
-            },
-            {
-                label: 'Make Patch',
-                click: makePatch
-            },
-            {
-                role: 'close'
-            }
-        ]
-    },
-    {
-        label: 'Edit',
-        submenu: [
-            {
-                label: 'Text Editor',
-                click: openTextEditor
-            },
-            {
-                label: 'Pokemon Editor',
-                click: openPokemonEditor
-            },
-            {
-                label: 'Move Editor',
-                click: openMoveEditor
-            }
-        ]
-    }
-] : [
-    {
-        label: 'File',
-        submenu: [
-            {
-                label: 'New Project',
-                click: newProject,
-                accelerator: 'CmdOrCtrl+N'
-            },
-            {
-                label: 'Open Project',
-                click: openProject,
-                accelerator: 'CmdOrCtrl+O'
-            },
-            {
-                label: 'Save Project',
-                click: saveProject,
-                accelerator: 'CmdOrCtrl+S'
-            },
-            {
-                label: 'Save Project As',
-                click: saveProjectAs,
-                accelerator: 'CmdOrCtrl+Shift+S'
-            },
-            {
-                label: 'Export ROM',
-                click: exportRom
-            },
-            {
-                label: 'Export ROM As',
-                click: exportRomAs
-            },
-            {
-                label: 'Make Patch',
-                click: makePatch
-            },
-            {
-                role: 'quit'
-            }
-        ]
-    },
-    {
-        label: 'Edit',
-        submenu: [
-            {
-                label: 'Text Editor',
-                click: openTextEditor
-            },
-            {
-                label: 'Pokemon Editor',
-                click: openPokemonEditor
-            },
-            {
-                label: 'Move Editor',
-                click: openMoveEditor
-            }
-        ]
-    }
-]
-
-const menu = Menu.buildFromTemplate(template);
-Menu.setApplicationMenu(menu);
 
 app.whenReady().then(createWindow);
 
