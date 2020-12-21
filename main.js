@@ -170,7 +170,7 @@ function createWindow() {
     ]
     
     const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
+    win.setMenu(menu);
 }
 
 const deleteFolderRecursive = (path) => {
