@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 const ndsToolExe = 'ndstool.exe';
-const xdelta = 'xdelta.exe';
+const xdeltaExe = 'xdelta.exe';
 
 let win;
 const isMac = process.platform === 'darwin';
@@ -108,6 +108,37 @@ const ndsTool = {
         ];
 
         child(pathOs.join(['bin', ndsTool]), params, (err, data) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            console.log(data.toString());
+        });
+    }
+};
+
+const xdelta3 = {
+    makePatch: (patchName, fname1, fname2) => {
+        var params = [
+            '-e', '-s', fname1, fname2, patchName
+        ];
+
+        child(pathOs.join(['bin', xdeltaExe]), params, (err, data) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            console.log(data.toString());
+        });
+    },
+    applyPatch: (patchName, fname1, fname2) => {
+        var params = [
+            '-d', '-s', fname1, patchName, fname2
+        ];
+
+        child(pathOs.join(['bin', xdeltaExe]), params, (err, data) => {
             if (err) {
                 console.error(err);
                 return;
@@ -271,7 +302,51 @@ function exportRomAs() {
 }
 
 function makePatch() {
+    if (config.project === undefined) {
+        dialog.showMessageBoxSync(win, {
+            type: 'error',
+            title: 'No ROM Loaded',
+            message: 'There is no ROM loaded.'
+        });
+        return;
+    }
 
+    let inRom, outRom;
+    win.webContents.send('baseRom', {type: 'get'});
+    win.webContents.send('projRom', {type: 'get'});
+    setTimeout(() => {
+        inRom = baseRom;
+        outRom = projRom;
+    });
+
+    if (!fs.existsSync(inRom)) {
+        dialog.showMessageBoxSync(win, {
+            type: 'error',
+            title: 'No ROM Loaded',
+            message: 'There is no ROM loaded.'
+        });
+        return;
+    }
+
+    if (!fs.existsSync(outRom)) {
+        dialog.showMessageBoxSync(win, {
+            type: 'error',
+            title: 'No ROM Loaded',
+            message: 'There is no ROM loaded.'
+        });
+        return;
+    }
+
+    dialog.showOpenDialogSync(win, {
+        properties: ['openFile'],
+        filters: [
+            { name: 'xdelta3 Patch File', extensions: ['xdelta3']},
+            { name: 'All Files', extensions: ['*']}
+        ]
+    }).then((fileData) => {
+        var filePath = pathOs.normalize(fileData.filePaths[0]);
+        xdelta3.makePatch(filePath, inRom, outRom);
+    });
 }
 
 function openTextEditor() {
@@ -433,6 +508,25 @@ Menu.setApplicationMenu(menu);
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
+    if (dirty) {
+        var prompt = dialog.showMessageBoxSync(win, {
+            type: 'question',
+            buttons: ['Yes', 'No', 'Cancel'],
+            title: 'Close?',
+            message: 'Your project has been modified.\nDo you want to save your project file?'
+        });
+
+        if (prompt === 0) {
+            saveProject();
+        } else if (prompt === 1) {
+
+        } else if (prompt === 2) {
+            return;
+        } else {
+            app.quit();
+        }
+    }
+
     if (process.platform !== 'darwin') {
         app.quit();
     }
